@@ -23,8 +23,7 @@ trace(grDevices::png, quote({
 
 # Read original schools database
 
-schools <- read.csv2("raw/schools.csv",
-                        fileEncoding = "Windows-1252")
+inactive_schools_sp <- read_rds("raw/inactive_schools_sp.rds")
 
 # Get geolocation from all Brazilian schools (package geobr)
 
@@ -42,14 +41,7 @@ coordinates_schools_clean <- coordinates_schools %>%
 
 # Join bases
 
-df <- left_join(schools, coordinates_schools_clean)
-
-# Select only schools from São Paulo that didn't work in 2021
-
-inactive_schools_sp <- df %>%
-  filter(SG_UF == "SP" & situacao_2021 != "ativa_2021") %>%
-  mutate(matriculas_2020 = creche_mat_2020 + pre_mat_2020,
-         rede = ifelse(dependencia == "3_privada_nao_conveniada", "privada", "pública ou conveniada"))
+df <- left_join(inactive_schools_sp, coordinates_schools_clean)
 
 # Create a layer with the map of São Paulo State (package geobr)
 
@@ -57,7 +49,7 @@ sp <- read_municipality(code_muni = "SP", year = 2020)
 
 # Map 1 - Daycare and preschools active in
 
-map <- inactive_schools_sp %>%
+map <- df %>%
   ggplot() +
   geom_sf(data = sp, fill = "#CCCCCC", color = "#DDDDDD", stroke = 0.3) +
   geom_sf(aes(geometry=geom,
